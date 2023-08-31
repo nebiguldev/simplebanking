@@ -2,70 +2,94 @@ package com.eteration.simplebanking;
 
 
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.eteration.simplebanking.model.Account;
-import com.eteration.simplebanking.model.DepositTransaction;
-import com.eteration.simplebanking.model.InsufficientBalanceException;
-import com.eteration.simplebanking.model.WithdrawalTransaction;
+import com.eteration.simplebanking.model.*;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ModelTest {
-	
-	@Test
-	public void testCreateAccountAndSetBalance0() {
-		Account account = new Account("Kerem Karaca", "17892");
-		assertTrue(account.getOwner().equals("Kerem Karaca"));
-		assertTrue(account.getAccountNumber().equals("17892"));
-		assertTrue(account.getBalance() == 0);
-	}
 
-	@Test
-	public void testDepositIntoBankAccount() {
-		Account account = new Account("Demet Demircan", "9834");
-		account.deposit(100);
-		assertTrue(account.getBalance() == 100);
-	}
+    @Test
+    public void testCreateAccountAndSetBalance0() {
+        Account account = new Account("Kerem Karaca", "17892");
+        assertTrue(account.getOwner().equals("Kerem Karaca"));
+        assertTrue(account.getAccountNumber().equals("17892"));
+        assertTrue(account.getBalance() == 0);
+    }
 
-	@Test
-	public void testWithdrawFromBankAccount() throws InsufficientBalanceException {
-		Account account = new Account("Demet Demircan", "9834");
-		account.deposit(100);
-		assertTrue(account.getBalance() == 100);
-		account.withdraw(50);
-		assertTrue(account.getBalance() == 50);
-	}
+    @Test
+    public void testDepositIntoBankAccount() throws InsufficientBalanceException {
+        Account account = new Account("Demet Demircan", "9834");
+        account.post(new DepositTransaction(100));
+        assertTrue(account.getBalance() == 100);
+    }
 
-	@Test
-	public void testWithdrawException() {
-		Assertions.assertThrows( InsufficientBalanceException.class, () -> {
-			Account account = new Account("Demet Demircan", "9834");
-			account.deposit(100);
-			account.withdraw(500);
-		  });
+    @Test
+    public void testWithdrawFromBankAccount() throws InsufficientBalanceException {
+        Account account = new Account("Demet Demircan", "9834");
+        account.post(new DepositTransaction(100));
+        assertTrue(account.getBalance() == 100);
+        account.post(new WithdrawalTransaction(50));
+        assertTrue(account.getBalance() == 50);
+    }
 
-	}
-	
-	@Test
-	public void testTransactions() throws InsufficientBalanceException {
-		// Create account
-		Account account = new Account("Canan Kaya", "1234");
-		assertTrue(account.getTransactions().size() == 0);
+    @Test
+    public void testWithdrawException() {
+        Assertions.assertThrows(InsufficientBalanceException.class, () -> {
+            Account account = new Account("Demet Demircan", "9834");
+            account.post(new DepositTransaction(100));
+            account.post(new WithdrawalTransaction(500));
+        });
+    }
 
-		// Deposit Transaction
-		DepositTransaction depositTrx = new DepositTransaction(100);
-		assertTrue(depositTrx.getDate() != null);
-		account.post(depositTrx);
-		assertTrue(account.getBalance() == 100);
-		assertTrue(account.getTransactions().size() == 1);
+    @Test
+    public void testTransactions() throws InsufficientBalanceException {
+        // Create account
+        Account account = new Account("Canan Kaya", "1234");
+        assertTrue(account.getTransactions().size() == 0);
 
-		// Withdrawal Transaction
-		WithdrawalTransaction withdrawalTrx = new WithdrawalTransaction(60);
-		assertTrue(withdrawalTrx.getDate() != null);
-		account.post(withdrawalTrx);
-		assertTrue(account.getBalance() == 40);
-		assertTrue(account.getTransactions().size() == 2);
-	}
+        // Deposit Transaction
+        DepositTransaction depositTrx = new DepositTransaction(100);
+        assertTrue(depositTrx.getDate() != null);
+        account.post(depositTrx);
+        assertTrue(account.getBalance() == 100);
+        assertTrue(account.getTransactions().size() == 1);
+
+        // Withdrawal Transaction
+        WithdrawalTransaction withdrawalTrx = new WithdrawalTransaction(60);
+        assertTrue(withdrawalTrx.getDate() != null);
+        account.post(withdrawalTrx);
+        assertTrue(account.getBalance() == 40);
+        assertTrue(account.getTransactions().size() == 2);
+    }
+
+    @Test
+    public void testPhoneBillPaymentTransaction() throws InsufficientBalanceException {
+        Account account = new Account("Ahmet Yilmaz", "5678");
+        account.post(new DepositTransaction(300));
+        assertTrue(account.getBalance() == 300);
+
+        PhoneBillPaymentTransaction phonePayment = new PhoneBillPaymentTransaction("Vodafone", "5423345566", 150);
+        account.post(phonePayment);
+
+        assertTrue(account.getBalance() == 150);
+        assertEquals("Vodafone", phonePayment.getOperator());
+        assertEquals("5423345566", phonePayment.getPhoneNumber());
+    }
+
+    @Test
+    public void testPhoneBillPaymentExceedsBalance() throws InsufficientBalanceException {
+        Account account = new Account("Mehmet Oz", "9876");
+        account.post(new DepositTransaction(50));
+
+        Assertions.assertThrows(InsufficientBalanceException.class, () -> {
+            PhoneBillPaymentTransaction phonePayment = new PhoneBillPaymentTransaction("Turkcell", "511223344", 100);
+            account.post(phonePayment);
+        });
+    }
 }
+
+

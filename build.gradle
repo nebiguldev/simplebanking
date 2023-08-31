@@ -14,9 +14,11 @@ repositories {
 
 dependencies {
   implementation 'org.springframework.boot:spring-boot-starter-web'
+  implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+  implementation 'org.postgresql:postgresql:42.3.1'
   testImplementation('org.springframework.boot:spring-boot-starter-test') {
-		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
-	}
+    exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+  }
   developmentOnly 'org.springframework.boot:spring-boot-devtools'
   testImplementation('org.mockito:mockito-core')
 }
